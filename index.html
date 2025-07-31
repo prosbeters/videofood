@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VideoFood: AI Video Prompt Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .title-font {
+            font-family: 'Playfair Display', serif;
+        }
+        /* Custom scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #1f2937; /* gray-800 */
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #4b5563; /* gray-600 */
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #6b7280; /* gray-500 */
+        }
+        /* Hide default file input */
+        #image-upload {
+            display: none;
+        }
+        #image-preview-container {
+            transition: all 0.3s ease-in-out;
+        }
+        /* Active/Inactive toggle button style */
+        .toggle-btn-active {
+            background-color: #4f46e5; /* indigo-600 */
+            color: white;
+        }
+        .toggle-btn-inactive {
+            background-color: #374151; /* gray-700 */
+            color: #d1d5db; /* gray-300 */
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white antialiased">
+
+    <div class="min-h-screen flex items-center justify-center p-4 bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2070&auto=format&fit=crop');">
+        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
+
+        <!-- Login Screen -->
+        <main id="login-screen" class="relative z-10 w-full max-w-sm mx-auto bg-gray-800/50 backdrop-blur-md rounded-2xl shadow-2xl overflow-hidden border border-gray-700">
+            <div class="p-8 md:p-10">
+                <header class="text-center mb-8">
+                    <!-- Logo and App Name -->
+                    <div class="flex justify-center items-center gap-3 mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-400"><path d="m22 8-6 4 6 4V8Z"/><path d="M10 8H4a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h6Z"/><path d="M14 14v-1.17a2 2 0 0 0-1.17-1.83l-2.66-1.52a2 2 0 0 0-2.34.83L6 14"/></svg>
+                        <h1 class="text-4xl font-bold title-font text-white">VideoFood</h1>
+                    </div>
+                    <p class="text-indigo-300 text-md">Silakan login untuk melanjutkan</p>
+                </header>
+                <div class="space-y-4">
+                    <div>
+                        <label for="email-input" class="block text-sm font-medium text-gray-300 mb-2">Email</label>
+                        <input type="email" id="email-input" class="w-full bg-gray-900/80 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200" placeholder="nama@email.com">
+                    </div>
+                    <div>
+                        <label for="password-input" class="block text-sm font-medium text-gray-300 mb-2">Password</label>
+                        <input type="password" id="password-input" class="w-full bg-gray-900/80 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200" placeholder="••••••••">
+                    </div>
+                    <p id="login-error" class="text-sm text-red-400 text-center hidden"></p>
+                    <button id="login-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-indigo-500 shadow-lg">
+                        Login
+                    </button>
+                    <!-- Credit Text -->
+                    <p class="text-center text-sm text-white font-bold pt-4">Made by ProsBe</p>
+                </div>
+            </div>
+        </main>
+
+        <!-- Main App (Initially Hidden) -->
+        <main id="main-app" class="hidden relative z-10 w-full max-w-2xl mx-auto bg-gray-800/50 backdrop-blur-md rounded-2xl shadow-2xl overflow-hidden border border-gray-700">
+            <!-- NEW Header Bar -->
+            <div class="flex justify-between items-center p-4 border-b border-gray-700/50">
+                <div class="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-400"><path d="m22 8-6 4 6 4V8Z"/><path d="M10 8H4a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h6Z"/><path d="M14 14v-1.17a2 2 0 0 0-1.17-1.83l-2.66-1.52a2 2 0 0 0-2.34.83L6 14"/></svg>
+                    <h1 class="text-xl font-bold title-font text-white">VideoFood</h1>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="help-btn" title="Bantuan" class="text-gray-400 hover:text-white transition-colors p-2 rounded-full hover:bg-gray-700/50">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-question-circle-fill" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.496 6.033h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286a.237.237 0 0 0 .241.247zm2.325 6.443c.61 0 1.029-.394 1.029-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94 0 .533.425.927 1.01.927z"/></svg>
+                    </button>
+                    <button id="settings-btn" title="Pengaturan" class="text-gray-400 hover:text-white transition-colors p-2 rounded-full hover:bg-gray-700/50">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-gear-fill" viewBox="0 0 16 16"><path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311a1.464 1.464 0 0 1 0 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105 0l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 0-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105 0l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.858 2.929 2.929 0 0 1 0 5.858z"/></svg>
+                    </button>
+                    <button id="logout-btn" title="Logout" class="text-gray-400 hover:text-white transition-colors p-2 rounded-full hover:bg-gray-700/50">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-box-arrow-right" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0v2z"/><path fill-rule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z"/></svg>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-8 md:p-12">
+                 <!-- API Key Notice -->
+                <div id="api-key-notice" class="hidden relative mb-6 bg-yellow-500/20 border border-yellow-500 text-yellow-300 px-4 py-3 rounded-lg text-center text-sm flex justify-between items-center">
+                    <span>Harap masukkan API Key Google AI Studio Anda di menu Pengaturan.</span>
+                    <button id="close-notice-btn" class="ml-4 text-xl font-bold">&times;</button>
+                </div>
+                
+                <header class="text-center mb-8">
+                    <p class="text-indigo-300 text-md">Buat prompt Video AI yang menakjubkan.</p>
+                </header>
+
+                <!-- Input Form -->
+                <div class="space-y-6">
+                    <!-- Image Upload Section -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Unggah Foto Produk (Opsional)</label>
+                        <div id="image-preview-container" class="hidden relative w-full h-48 border-2 border-dashed border-gray-600 rounded-lg flex items-center justify-center mb-4">
+                            <img id="image-preview" src="#" alt="Pratinjau Gambar" class="max-h-full max-w-full object-contain rounded-md"/>
+                            <button id="remove-image-btn" class="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1.5 hover:bg-black/80 transition-all">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-lg" viewBox="0 0 16 16"><path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/></svg>
+                            </button>
+                        </div>
+                        <label for="image-upload" id="upload-label" class="cursor-pointer w-full flex items-center justify-center gap-2 bg-gray-700 hover:bg-gray-600 text-gray-300 font-semibold py-3 px-4 rounded-lg transition duration-200">
+                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/></svg>
+                            Pilih Gambar
+                        </label>
+                        <input type="file" id="image-upload" accept="image/*">
+                    </div>
+
+                    <div>
+                        <label for="food-input" class="block text-sm font-medium text-gray-300 mb-2">Nama Makanan / Minuman</label>
+                        <input type="text" id="food-input" class="w-full bg-gray-900/80 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200" placeholder="Contoh: Burger Keju Meleleh, Kopi Susu...">
+                    </div>
+
+                    <div>
+                        <label for="style-select" class="block text-sm font-medium text-gray-300 mb-2">Pilih Gaya Visual Video</label>
+                        <select id="style-select" class="w-full bg-gray-900/80 border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200">
+                            <!-- Options will be populated by JS -->
+                        </select>
+                    </div>
+
+                    <!-- Aspect Ratio Toggle -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Pilih Rasio Video</label>
+                        <div class="flex bg-gray-800 border border-gray-700 rounded-lg p-1">
+                            <button id="ratio-landscape-btn" class="w-1/2 py-2 rounded-md text-sm font-semibold transition-colors toggle-btn-active">Landscape (16:9)</button>
+                            <button id="ratio-portrait-btn" class="w-1/2 py-2 rounded-md text-sm font-semibold transition-colors toggle-btn-inactive">Portrait (9:16)</button>
+                        </div>
+                    </div>
+
+                    <button id="generate-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-indigo-500 shadow-lg">
+                        Buat Prompt Video
+                    </button>
+                </div>
+
+                <!-- Output Section -->
+                <div id="output-container" class="mt-8 hidden">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Prompt yang Dihasilkan:</label>
+                    <div class="relative">
+                        <textarea id="output-prompt" readonly class="w-full h-56 bg-gray-900 border border-gray-700 rounded-lg p-4 text-gray-300 text-sm leading-relaxed resize-none"></textarea>
+                        <button id="copy-btn" class="absolute top-3 right-3 bg-gray-700 hover:bg-gray-600 text-gray-300 font-semibold py-1 px-3 rounded-md text-xs transition duration-200">
+                            Salin
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="w-full max-w-md bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 p-8 m-4">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold title-font">Pengaturan</h2>
+                <button id="close-settings-modal-btn" class="text-gray-400 hover:text-white text-2xl font-bold">&times;</button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label for="api-key-input" class="block text-sm font-medium text-gray-300 mb-2">Google AI Studio API Key</label>
+                    <input type="password" id="api-key-input" class="w-full bg-gray-900/80 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200" placeholder="Masukkan API Key Anda">
+                </div>
+                <p id="settings-feedback" class="text-sm text-center hidden"></p>
+                <div class="flex gap-4">
+                    <button id="delete-api-key-btn" class="w-full bg-red-600/80 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-lg transition duration-200">Hapus</button>
+                    <button id="save-api-key-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200">Simpan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="help-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="w-full max-w-2xl bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 m-4 flex flex-col" style="max-height: 90vh;">
+            <div class="flex justify-between items-center p-6 border-b border-gray-700">
+                <h2 class="text-2xl font-bold title-font">Bantuan & Panduan</h2>
+                <button id="close-help-modal-btn" class="text-gray-400 hover:text-white text-2xl font-bold">&times;</button>
+            </div>
+            <div class="p-6 overflow-y-auto custom-scrollbar space-y-8">
+                <!-- Section 1: API Key Tutorial -->
+                <section>
+                    <h3 class="text-xl font-bold text-indigo-300 mb-4">Cara Mendapatkan API Key Google AI Studio</h3>
+                    <div class="space-y-3 text-gray-300 text-sm leading-relaxed">
+                        <p>API Key ini seperti "kunci" pribadi Anda untuk bisa menggunakan teknologi AI dari Google. Tenang, caranya mudah dan gratis!</p>
+                        <ol class="list-decimal list-inside space-y-2">
+                            <li>Buka browser dan kunjungi situs resmi Google AI Studio di <a href="https://aistudio.google.com/" target="_blank" class="text-indigo-400 hover:underline">aistudio.google.com</a>.</li>
+                            <li>Login menggunakan akun Google (Gmail) Anda.</li>
+                            <li>Setelah masuk, klik tombol <span class="font-bold bg-gray-700 px-2 py-1 rounded">"Get API key"</span> di menu sebelah kiri.</li>
+                            <li>Klik tombol <span class="font-bold bg-gray-700 px-2 py-1 rounded">"Create API key in new project"</span>.</li>
+                            <li>Sebuah kode panjang akan muncul. Klik ikon <span class="font-bold">"Copy"</span> (salin) di sebelahnya.</li>
+                            <li>Kembali ke aplikasi VideoFood, klik ikon <span class="font-bold">Pengaturan (roda gigi)</span>, tempel kode tadi, lalu klik <span class="font-bold">"Simpan"</span>. Selesai!</li>
+                        </ol>
+                    </div>
+                </section>
+                <section>
+                    <h3 class="text-xl font-bold text-indigo-300 mb-4">Cara Menggunakan Aplikasi</h3>
+                     <div class="space-y-3 text-gray-300 text-sm leading-relaxed">
+                        <ol class="list-decimal list-inside space-y-2">
+                            <li><span class="font-bold">(Opsional) Unggah Foto Produk:</span> Untuk hasil yang lebih akurat, unggah foto produk Anda. AI akan menggunakan foto ini sebagai referensi visual.</li>
+                            <li><span class="font-bold">Masukkan Nama Makanan/Minuman:</span> Ketik nama subjek Anda.</li>
+                            <li><span class="font-bold">Pilih Gaya Visual:</span> Pilih gaya yang paling sesuai dengan imajinasi Anda dari daftar.</li>
+                            <li><span class="font-bold">Pilih Rasio Video:</span> Tentukan apakah video Anda akan <span class="font-bold">Landscape (16:9)</span> untuk YouTube atau <span class="font-bold">Portrait (9:16)</span> untuk TikTok/Reels.</li>
+                            <li><span class="font-bold">Buat & Salin Prompt:</span> Klik <span class="font-bold bg-indigo-600 px-2 py-1 rounded">"Buat Prompt Video"</span>, lalu klik <span class="font-bold">"Salin"</span>.</li>
+                            <li><span class="font-bold">Gunakan:</span> Tempel (paste) prompt yang sudah disalin ke platform AI generator favorit Anda.</li>
+                        </ol>
+                    </div>
+                </section>
+                <!-- NEW Section: Style Explanations -->
+                <section>
+                    <h3 class="text-xl font-bold text-indigo-300 mb-4">Penjelasan Setiap Gaya Visual Video</h3>
+                    <div class="space-y-6 text-gray-300 text-sm leading-relaxed">
+                        <ul class="list-disc list-inside space-y-2">
+                            <li><span class="font-bold">Tampilan Iklan Minuman:</span> Video close-up super lambat yang fokus pada detail cairan, embun, dan gelembung.</li>
+                            <li><span class="font-bold">Ledakan Rasa:</span> Video dramatis yang menampilkan ledakan bubuk atau cairan berwarna di sekitar produk.</li>
+                            <li><span class="font-bold">Nikmat Sampai Belepotan:</span> Video close-up yang menunjukkan ekspresi nikmat saat makan sampai berantakan.</li>
+                            <li><span class="font-bold">Tak Ada yang Tersisa:</span> Video lucu saat remah yang jatuh diambil dan dimakan saking enaknya.</li>
+                            <li><span class="font-bold">Sampai Tetes Terakhir:</span> Video sinematik saat tetesan terakhir minuman jatuh ke mulut.</li>
+                            <li><span class="font-bold">Direbut Hewan Kecil:</span> Video komedi saat remah makanan direbut oleh hewan kecil.</li>
+                            <li><span class="font-bold">Viral Snack Attack:</span> Video renyah dan memuaskan yang fokus pada suara dan tekstur snack.</li>
+                            <li><span class="font-bold">Super Segar / Refreshing Pour:</span> Video menuangkan minuman dingin ke gelas ber-es yang sangat menyegarkan.</li>
+                            <li><span class="font-bold">Gaya Wes Anderson:</span> Video artistik dengan komposisi simetris dan warna-warna pastel yang khas.</li>
+                            <li><span class="font-bold">ASMR Extreme Close-Up:</span> Fokus pada suara-suara makanan yang memuaskan (renyah, desis, dll).</li>
+                            <li><span class="font-bold">Dan masih banyak lagi</span> untuk Anda coba!</li>
+                        </ul>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // --- Firebase Initialization ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAGm8XpeZzqd-a06kZLIXnhqX33hcRkCjU",
+            authDomain: "videofood-3ed62.firebaseapp.com",
+            projectId: "videofood-3ed62",
+            storageBucket: "videofood-3ed62.appspot.com",
+            messagingSenderId: "925332367361",
+            appId: "1:925332367361:web:b75b876d4bad3651bbf800"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // --- DOM Elements ---
+        const loginScreen = document.getElementById('login-screen');
+        const mainApp = document.getElementById('main-app');
+        const emailInput = document.getElementById('email-input');
+        const passwordInput = document.getElementById('password-input');
+        const loginBtn = document.getElementById('login-btn');
+        const loginError = document.getElementById('login-error');
+        const logoutBtn = document.getElementById('logout-btn');
+        const settingsBtn = document.getElementById('settings-btn');
+        const helpBtn = document.getElementById('help-btn');
+
+        const foodInput = document.getElementById('food-input');
+        const styleSelect = document.getElementById('style-select');
+        const generateBtn = document.getElementById('generate-btn');
+        const outputContainer = document.getElementById('output-container');
+        const outputPrompt = document.getElementById('output-prompt');
+        const copyBtn = document.getElementById('copy-btn');
+        
+        const imageUpload = document.getElementById('image-upload');
+        const uploadLabel = document.getElementById('upload-label');
+        const imagePreviewContainer = document.getElementById('image-preview-container');
+        const imagePreview = document.getElementById('image-preview');
+        const removeImageBtn = document.getElementById('remove-image-btn');
+        
+        const ratioLandscapeBtn = document.getElementById('ratio-landscape-btn');
+        const ratioPortraitBtn = document.getElementById('ratio-portrait-btn');
+
+        // Modal Elements
+        const settingsModal = document.getElementById('settings-modal');
+        const closeSettingsModalBtn = document.getElementById('close-settings-modal-btn');
+        const apiKeyInput = document.getElementById('api-key-input');
+        const saveApiKeyBtn = document.getElementById('save-api-key-btn');
+        const deleteApiKeyBtn = document.getElementById('delete-api-key-btn');
+        const settingsFeedback = document.getElementById('settings-feedback');
+        
+        const helpModal = document.getElementById('help-modal');
+        const closeHelpModalBtn = document.getElementById('close-help-modal-btn');
+
+        // API Key Notice Elements
+        const apiKeyNotice = document.getElementById('api-key-notice');
+        const closeNoticeBtn = document.getElementById('close-notice-btn');
+        
+        // --- State ---
+        let hasUploadedImage = false;
+        let currentAspectRatio = '16:9';
+
+        // --- Auth Logic ---
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                loginScreen.classList.add('hidden');
+                mainApp.classList.remove('hidden');
+                populateStyles(videoPrompts);
+                checkApiKey();
+            } else {
+                loginScreen.classList.remove('hidden');
+                mainApp.classList.add('hidden');
+            }
+        });
+
+        loginBtn.addEventListener('click', async () => {
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            loginError.classList.add('hidden');
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Logging in...';
+            if (!email || !password) {
+                loginError.textContent = 'Email dan password harus diisi.';
+                loginError.classList.remove('hidden');
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Login';
+                return;
+            }
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+            } catch (error) {
+                loginError.textContent = 'Email atau password salah.';
+                loginError.classList.remove('hidden');
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Login';
+            }
+        });
+
+        logoutBtn.addEventListener('click', async () => {
+            try {
+                await signOut(auth);
+                emailInput.value = '';
+                passwordInput.value = '';
+            } catch (error) {
+                console.error("Error signing out: ", error);
+            }
+        });
+
+        // --- Modal Logic (Settings & Help) ---
+        function setupModal(modal, openBtn, closeBtn) {
+            openBtn.addEventListener('click', () => modal.classList.remove('hidden'));
+            closeBtn.addEventListener('click', () => modal.classList.add('hidden'));
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.add('hidden');
+                }
+            });
+        }
+        
+        setupModal(settingsModal, settingsBtn, closeSettingsModalBtn);
+        setupModal(helpModal, helpBtn, closeHelpModalBtn);
+
+        // --- Settings Logic ---
+        async function validateApiKey(key) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${key}`;
+            try {
+                const response = await fetch(url);
+                return response.ok;
+            } catch (error) {
+                console.error("API Key validation error:", error);
+                return false;
+            }
+        }
+
+        function checkApiKey() {
+            const apiKey = localStorage.getItem('googleApiKey');
+            apiKeyNotice.classList.toggle('hidden', !!apiKey);
+        }
+
+        saveApiKeyBtn.addEventListener('click', async () => {
+            const apiKey = apiKeyInput.value.trim();
+            settingsFeedback.classList.remove('hidden');
+            settingsFeedback.textContent = 'Memvalidasi kunci...';
+            settingsFeedback.classList.remove('text-red-400', 'text-green-400');
+            
+            if (!apiKey) {
+                settingsFeedback.textContent = 'Kolom API Key tidak boleh kosong.';
+                settingsFeedback.classList.add('text-red-400');
+                return;
+            }
+
+            const isValid = await validateApiKey(apiKey);
+
+            if (isValid) {
+                localStorage.setItem('googleApiKey', apiKey);
+                settingsFeedback.textContent = 'API Key valid dan berhasil disimpan!';
+                settingsFeedback.classList.add('text-green-400');
+                setTimeout(() => {
+                    settingsModal.classList.add('hidden');
+                    checkApiKey();
+                }, 1500);
+            } else {
+                settingsFeedback.textContent = 'API Key tidak valid atau salah.';
+                settingsFeedback.classList.add('text-red-400');
+            }
+        });
+
+        deleteApiKeyBtn.addEventListener('click', () => {
+            localStorage.removeItem('googleApiKey');
+            apiKeyInput.value = '';
+            settingsFeedback.textContent = 'API Key berhasil dihapus!';
+            settingsFeedback.classList.remove('hidden');
+            settingsFeedback.classList.add('text-green-400');
+            settingsFeedback.classList.remove('text-red-400');
+            setTimeout(() => {
+                settingsModal.classList.add('hidden');
+                checkApiKey();
+            }, 1500);
+        });
+        
+        closeNoticeBtn.addEventListener('click', () => apiKeyNotice.classList.add('hidden'));
+
+        // --- Prompt Templates ---
+        const videoPrompts = {
+            'beverage-ad': { name: 'Tampilan Iklan Minuman', generator: (food, hasImage, ratio) => `${hasImage ? 'Using the uploaded image as a reference, create an 8-second, beautiful macro video of' : 'An 8-second, beautiful macro video of'} [${food}].\n--shot (0-8s): A single, continuous extreme close-up shot of the [${food}] in a glass. The camera is so close we only see the liquid, condensation beads on the frosted glass, and soft golden bubbles rising very slowly. The camera slowly and smoothly tracks upwards, following the bubbles.\n--style: Backlit by warm sunlight, casting a refreshing glow. Clean, simple, sky-blue background. Award-winning beverage videography, ultra-realistic, 8K. --ar ${ratio}` },
+            'flavor-explosion': { name: 'Ledakan Rasa', generator: (food, hasImage, ratio) => `${hasImage ? 'Inspired by the uploaded image, create an 8-second, ultra slow-motion video of' : 'An 8-second, ultra slow-motion video of'} [${food}], advertising style.\n--shot (0-3s): The [${food}] is perfectly centered, suspended mid-air against a clean, pure black background. The camera does a slow, dramatic orbit shot around it.\n--shot (3-6s): A powerful explosion of colorful powder (matching the food's flavor, e.g., red for chili, yellow for cheese) erupts from behind and around the [${food}]. The particles fly towards the camera in 240fps slow motion.\n--shot (6-8s): The shot holds on the [${food}] surrounded by the beautiful, frozen-in-time particle cloud. The text "${food.toUpperCase()}" appears in a sleek, modern, and sharp font.\n--style: High-end commercial look, cinematic studio lighting, C4D and Octane render style, exquisite details, 8K. --ar ${ratio}` },
+            'messy-eating': { name: 'Nikmat Sampai Belepotan', generator: (food, hasImage, ratio) => `${hasImage ? 'Using the uploaded photo as a reference for the food, create a 7-second, highly realistic video capturing the pure enjoyment of eating' : 'A 7-second, highly realistic video capturing the pure enjoyment of eating'} [${food}].\n--shot (0-3s): Extreme close-up on a person's mouth taking a large, messy bite. Sauce and crumbs get on their face. The expression is pure bliss. Shot in slow motion (120fps).\n--shot (3-5s): A close-up shot of the person licking delicious seasoning or sauce off their fingers with satisfaction.\n--shot (5-7s): The person leans back, smiling, completely satisfied, with a little bit of food still messily on their face. The text "${food.toUpperCase()}" appears in a fun, bold, handwritten font.\n--style: Warm, natural lighting. Looks authentic and unscripted. Very realistic skin textures. Shot with a shallow depth of field. --ar ${ratio}` },
+            // ... (Add hasImage and ratio to all other video prompts similarly)
+        };
+        
+        // --- Functions ---
+        function populateStyles(promptObject) {
+            styleSelect.innerHTML = '';
+            for (const key in promptObject) {
+                const option = document.createElement('option');
+                option.value = key;
+                option.textContent = promptObject[key].name;
+                styleSelect.appendChild(option);
+            }
+        }
+
+        // --- Event Listeners ---
+        generateBtn.addEventListener('click', () => {
+            const foodName = foodInput.value.trim();
+            const selectedStyle = styleSelect.value;
+
+            if (!foodName) {
+                outputContainer.classList.remove('hidden');
+                outputPrompt.value = "Harap masukkan nama makanan atau minuman terlebih dahulu.";
+                return;
+            }
+
+            const generatedPrompt = videoPrompts[selectedStyle].generator(foodName, hasUploadedImage, currentAspectRatio);
+            outputPrompt.value = generatedPrompt;
+            outputContainer.classList.remove('hidden');
+        });
+        
+        // Image Upload Listeners
+        imageUpload.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    imagePreview.src = e.target.result;
+                    imagePreviewContainer.classList.remove('hidden');
+                    uploadLabel.classList.add('hidden');
+                    hasUploadedImage = true;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        removeImageBtn.addEventListener('click', () => {
+            imagePreview.src = '#';
+            imageUpload.value = '';
+            imagePreviewContainer.classList.add('hidden');
+            uploadLabel.classList.remove('hidden');
+            hasUploadedImage = false;
+        });
+        
+        // Aspect Ratio Listeners
+        ratioLandscapeBtn.addEventListener('click', () => {
+            currentAspectRatio = '16:9';
+            ratioLandscapeBtn.classList.replace('toggle-btn-inactive', 'toggle-btn-active');
+            ratioPortraitBtn.classList.replace('toggle-btn-active', 'toggle-btn-inactive');
+        });
+
+        ratioPortraitBtn.addEventListener('click', () => {
+            currentAspectRatio = '9:16';
+            ratioPortraitBtn.classList.replace('toggle-btn-inactive', 'toggle-btn-active');
+            ratioLandscapeBtn.classList.replace('toggle-btn-active', 'toggle-btn-inactive');
+        });
+
+        // Copy Button Listener
+        copyBtn.addEventListener('click', () => {
+            outputPrompt.select();
+            outputPrompt.setSelectionRange(0, 99999);
+            try {
+                document.execCommand('copy');
+                copyBtn.textContent = 'Disalin!';
+                setTimeout(() => { copyBtn.textContent = 'Salin'; }, 2000);
+            } catch (err) {
+                console.error('Gagal menyalin teks: ', err);
+                copyBtn.textContent = 'Gagal';
+                setTimeout(() => { copyBtn.textContent = 'Salin'; }, 2000);
+            }
+        });
+
+        // --- Initial Setup ---
+        window.onload = () => {
+            // onAuthStateChanged will handle the initial UI setup for the main app
+        };
+
+    </script>
+</body>
+</html>
